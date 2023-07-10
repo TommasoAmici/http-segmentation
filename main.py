@@ -134,11 +134,11 @@ async def segment_handler(request: Request):
     if len(images) == 1:
         [segmented_image] = images
         bytes_stream = BytesIO()
-        segmented_image.save(bytes_stream, "PNG")
+        segmented_image.save(bytes_stream, "WEBP")
         bytes_stream.seek(0)
         return Response(
             content=bytes_stream.getvalue(),
-            media_type="image/png",
+            media_type="image/webp",
             status_code=HTTPStatus.OK,
         )
 
@@ -149,11 +149,11 @@ async def segment_handler(request: Request):
     response.body = b""
     for i, segmented_image in enumerate(images):
         bytes_stream = BytesIO()
-        segmented_image.save(bytes_stream, "PNG")
+        segmented_image.save(bytes_stream, "WEBP")
         bytes_stream.seek(0)
         response.body += b"--boundary\r\n"
         response.body += b'Content-Disposition: form-data; name="sticker_%d"\r\n' % i
-        response.body += b"Content-Type: image/png\r\n\r\n"
+        response.body += b"Content-Type: image/webp\r\n\r\n"
         response.body += bytes_stream.getvalue()
         response.body += b"\r\n"
 

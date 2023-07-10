@@ -22,7 +22,7 @@ by the service. The default is `yolov8x-seg`.
 Accepts a POST request with a an image in the body of the request.
 
 It will then perform segmentation on the image and if there is only one mask
-it will return the segmented image as a PNG. If there are multiple masks it
+it will return the segmented image as a webp. If there are multiple masks it
 will return a `multipart/form-data` response containing all the segmented images.
 
 You should inspect the `content-type` header of the response to determine
