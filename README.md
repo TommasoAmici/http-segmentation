@@ -23,14 +23,14 @@ Accepts a POST request with a an image in the body of the request.
 
 It will then perform segmentation on the image and if there is only one mask
 it will return the segmented image as a PNG. If there are multiple masks it
-will return a zip file containing all the segmented images.
+will return a `multipart/form-data` response containing all the segmented images.
 
 You should inspect the `content-type` header of the response to determine
-whether the response is a PNG or a zip file.
+whether the response contains a single image or multiple images.
 
 ```sh
 curl -X POST --data-binary @./.github/readme/test.png \
-  http://localhost:8000/segment --output test_segmented.zip
+  http://localhost:8000/segment
 ```
 
 | Request                        | Response                                 |
@@ -44,7 +44,7 @@ size.
 
 ```sh
 curl -X POST --data-binary @./.github/readme/test.png \
-  http://localhost:8000/segment/256 --output test_segmented.zip
+  http://localhost:8000/segment/256
 ```
 
 #### `/health`

@@ -1,6 +1,5 @@
 import enum
 import os
-import zipfile
 from datetime import datetime
 from http import HTTPStatus
 from io import BytesIO
@@ -143,23 +142,26 @@ async def segment_handler(request: Request):
             status_code=HTTPStatus.OK,
         )
 
-    # If there are multiple masks, return them as a zip file without writing
-    # anything to disk
-    zip_bytes_stream = BytesIO()
-    with zipfile.ZipFile(zip_bytes_stream, "w") as zip_file:
-        for i, segmented_image in enumerate(images):
-            bytes_stream = BytesIO()
-            segmented_image.save(bytes_stream, "PNG")
-            bytes_stream.seek(0)
-            zip_file.writestr(f"{i}.png", bytes_stream.getvalue())
+    # Create a multipart response
+    response = Response()
+    response.headers["Content-Type"] = 'multipart/form-data;boundary="boundary"'
 
-    zip_bytes_stream.seek(0)
+    response.body = b""
+    for i, segmented_image in enumerate(images):
+        bytes_stream = BytesIO()
+        segmented_image.save(bytes_stream, "PNG")
+        bytes_stream.seek(0)
+        response.body += b"--boundary\r\n"
+        response.body += b'Content-Disposition: form-data; name="sticker_%d"\r\n' % i
+        response.body += b"Content-Type: image/png\r\n\r\n"
+        response.body += bytes_stream.getvalue()
+        response.body += b"\r\n"
 
-    return Response(
-        content=zip_bytes_stream.getvalue(),
-        media_type="application/zip",
-        status_code=HTTPStatus.OK,
-    )
+    # Add the closing boundary
+    response.body += b"--boundary--\r\n"
+    response.headers["Content-Length"] = str(len(response.body))
+
+    return response
 
 
 async def health_handler(request: Request):
