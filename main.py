@@ -143,7 +143,7 @@ async def segment_handler(request: Request):
         )
 
     # Create a multipart response
-    response = Response()
+    response = Response(status_code=HTTPStatus.MULTI_STATUS)
     response.headers["Content-Type"] = 'multipart/form-data;boundary="boundary"'
 
     response.body = b""

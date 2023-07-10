@@ -23,7 +23,8 @@ Accepts a POST request with a an image in the body of the request.
 
 It will then perform segmentation on the image and if there is only one mask
 it will return the segmented image as a webp. If there are multiple masks it
-will return a `multipart/form-data` response containing all the segmented images.
+will return a `multipart/form-data` response containing all the segmented images,
+with HTTP Status 207.
 
 You should inspect the `content-type` header of the response to determine
 whether the response contains a single image or multiple images.
