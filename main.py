@@ -16,6 +16,13 @@ if TYPE_CHECKING:
 
 KILL_AFTER_SECONDS = 120
 
+s3_config = {
+    "endpoint": os.environ["S3_ENDPOINT_URL"],
+    "bucket": os.environ["S3_BUCKET"],
+    "aws_access_key_id": os.environ["S3_ACCESS_KEY"],
+    "aws_secret_access_key": os.environ["S3_SECRET_KEY"],
+}
+
 # global variable used to kill the container if no requests have been received
 # in the last KILL_AFTER_SECONDS seconds
 time_of_last_request = None
@@ -135,21 +142,22 @@ async def segment_handler(request: Request):
 
     s3_client = boto3.client(
         "s3",
-        endpoint_url=os.getenv("S3_ENDPOINT_URL"),
-        aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
-        aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
+        endpoint_url=s3_config["endpoint"],
+        aws_access_key_id=s3_config["aws_access_key_id"],
+        aws_secret_access_key=s3_config["aws_secret_access_key"],
         aws_session_token=None,
-        verify=False,
     )
-    bucket = os.getenv("S3_BUCKET")
+
     file_names = []
     for segmented_image in images:
         bytes_stream = BytesIO()
         segmented_image.save(bytes_stream, "WEBP")
         bytes_stream.seek(0)
         file_name = uuid.uuid4().hex + ".webp"
-        s3_client.upload_fileobj(bytes_stream, bucket, file_name)
-        file_names.append(file_name)
+        s3_client.upload_fileobj(bytes_stream, s3_config["bucket"], file_name)
+        file_names.append(
+            os.path.join(s3_config["endpoint"], s3_config["bucket"], file_name)
+        )
 
     return JSONResponse({"file_names": file_names})
 

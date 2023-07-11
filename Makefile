@@ -31,5 +31,6 @@ lint: venv ## Lint codebase with Ruff
 lint_fix: venv ## Lint codebase with Ruff and fix issues automatically
 	${BIN}/ruff --fix ${LINT_DIRS}
 
+include .env
 run: venv ## Run application
 	${BIN}/uvicorn --reload main:app
