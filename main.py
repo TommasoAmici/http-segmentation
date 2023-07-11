@@ -1,5 +1,6 @@
 import enum
 import os
+import uuid
 from datetime import datetime
 from http import HTTPStatus
 from io import BytesIO
@@ -102,6 +103,8 @@ async def segment_handler(request: Request):
         curl -X POST --data-binary "@/path/to/image.jpg" http://localhost:8000/segment
         curl -X POST --data-binary "@/path/to/image.jpg" http://localhost:8000/segment/512
     """
+    import boto3
+
     resize = request.path_params.get("resize", None)
 
     global time_of_last_request
@@ -130,38 +133,25 @@ async def segment_handler(request: Request):
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 
-    # If there is only one mask, return it as a single image
-    if len(images) == 1:
-        [segmented_image] = images
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=os.getenv("S3_ENDPOINT_URL"),
+        aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
+        aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
+        aws_session_token=None,
+        verify=False,
+    )
+    bucket = os.getenv("S3_BUCKET")
+    file_names = []
+    for segmented_image in images:
         bytes_stream = BytesIO()
         segmented_image.save(bytes_stream, "WEBP")
         bytes_stream.seek(0)
-        return Response(
-            content=bytes_stream.getvalue(),
-            media_type="image/webp",
-            status_code=HTTPStatus.OK,
-        )
+        file_name = uuid.uuid4().hex + ".webp"
+        s3_client.upload_fileobj(bytes_stream, bucket, file_name)
+        file_names.append(file_name)
 
-    # Create a multipart response
-    response = Response(status_code=HTTPStatus.MULTI_STATUS)
-    response.headers["Content-Type"] = 'multipart/form-data;boundary="boundary"'
-
-    response.body = b""
-    for i, segmented_image in enumerate(images):
-        bytes_stream = BytesIO()
-        segmented_image.save(bytes_stream, "WEBP")
-        bytes_stream.seek(0)
-        response.body += b"--boundary\r\n"
-        response.body += b'Content-Disposition: form-data; name="sticker_%d"\r\n' % i
-        response.body += b"Content-Type: image/webp\r\n\r\n"
-        response.body += bytes_stream.getvalue()
-        response.body += b"\r\n"
-
-    # Add the closing boundary
-    response.body += b"--boundary--\r\n"
-    response.headers["Content-Length"] = str(len(response.body))
-
-    return response
+    return JSONResponse({"file_names": file_names})
 
 
 async def health_handler(request: Request):
