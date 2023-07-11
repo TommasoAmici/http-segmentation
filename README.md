@@ -46,7 +46,7 @@ curl -X POST --data-binary @./.github/readme/test.png http://localhost:8000/segm
 #### `/segment/{resize:int}`
 
 The same as `/segment` but will resize the cropped images to the specified
-size.
+size, upscaling if necessary.
 
 ```sh
 curl -X POST --data-binary @./.github/readme/test.png http://localhost:8000/segment/256

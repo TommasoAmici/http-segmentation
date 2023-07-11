@@ -81,6 +81,18 @@ class Segmentator:
 
         return segmented_image
 
+    def resize_image(self, image):
+        image.thumbnail((self.resize, self.resize))
+        if image.width != self.resize or image.height != self.resize:
+            if image.width > image.height:
+                width = self.resize
+                height = int((self.resize / image.width) * image.height)
+            else:
+                width = int((self.resize / image.height) * image.width)
+                height = self.resize
+            image = image.resize((width, height))
+        return image
+
     def segment(self):
         result = self.find_masks()
         if len(result.masks) == 0:
@@ -90,7 +102,7 @@ class Segmentator:
                 try:
                     masked_image = self.apply_mask(mask.xy[0])
                     if self.resize:
-                        masked_image.thumbnail((self.resize, self.resize))
+                        masked_image = self.resize_image(masked_image)
                     yield (ReturnType.SEGMENTED_IMAGE, masked_image)
                 except:
                     yield (ReturnType.ERROR, None)
