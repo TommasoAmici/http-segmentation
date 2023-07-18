@@ -35,10 +35,8 @@ class ReturnType(enum.Enum):
 
 
 class Segmentator:
-    def __init__(self, image_bytes: bytes, resize: int | None = None) -> None:
-        from PIL import Image
-
-        self.image = Image.open(BytesIO(image_bytes))
+    def __init__(self, image, resize: int | None = None) -> None:
+        self.image = image
         self.resize = resize
 
     def find_masks(self):
@@ -123,6 +121,7 @@ async def segment_handler(request: Request):
         curl -X POST --data-binary "@/path/to/image.jpg" http://localhost:8000/segment/512
     """
     import boto3
+    from PIL import Image
 
     resize = request.path_params.get("resize", None)
 
@@ -130,9 +129,10 @@ async def segment_handler(request: Request):
     time_of_last_request = datetime.utcnow()
 
     body = await request.body()
-    segmentator = Segmentator(body, resize)
+    image = Image.open(BytesIO(body))
+    segmentator = Segmentator(image, resize)
     segmented = list(segmentator.segment())
-    images = []
+    images = [image]
     for return_type, segmented_image in segmented:
         match return_type:
             case ReturnType.NO_MASK:

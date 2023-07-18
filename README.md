@@ -35,7 +35,8 @@ The following environment variables should be used to configure the service:
 Accepts a POST request with a an image in the body of the request.
 
 It will then perform segmentation on the image, upload the segmented images to
-S3 and return a JSON response with the URLs of the uploaded images.
+S3 and return a JSON response with the URLs of the uploaded images, including
+the original.
 
 ```sh
 curl -X POST --data-binary @./.github/readme/test.png http://localhost:8000/segment
