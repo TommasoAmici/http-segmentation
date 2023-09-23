@@ -1,6 +1,6 @@
 # HTTP Segment
 
-This is a simple service that wraps the [`yolov8x-seg` model](https://docs.ultralytics.com/tasks/segment/)
+This is a simple service that wraps the [`rembg` library](https://github.com/danielgatis/rembg)
 in an HTTP API based on the Starlette framework.
 
 |                                |                                          |
@@ -17,7 +17,9 @@ docker run -p 8000:8000 $IMAGE_NAME
 ```
 
 By specifying the `MODEL` environment variable you can change the model loaded
-by the service. The default is `yolov8x-seg`.
+by the service. The default is `silueta`.
+
+Check this list to see [what models are available](https://github.com/danielgatis/rembg#models).
 
 ### Configuration
 

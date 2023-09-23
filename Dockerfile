@@ -15,16 +15,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2
 
 ARG USER_ID=1001
 ARG GROUP_ID=1001
-USER ${USER_ID}:${GROUP_ID}
+RUN mkdir /.u2net && chown -R ${USER_ID}:${GROUP_ID} /.u2net
 
 WORKDIR /app/
 
 ENV PYTHONUNBUFFERED=1 \
-  PYTHONUSERBASE=/app/build \
-  MODEL_PATH=/app/yolov8x-seg.pt
+  PYTHONUSERBASE=/app/build
 
-COPY --chown=${USER_ID}:${GROUP_ID} yolov8x-seg.pt /app/
 COPY --from=builder --chown=${USER_ID}:${GROUP_ID} /app/build /app/build
 COPY --chown=${USER_ID}:${GROUP_ID} main.py /app/
 
+USER ${USER_ID}:${GROUP_ID}
 CMD ["/app/build/bin/uvicorn", "--host", "0.0.0.0", "main:app"]

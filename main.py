@@ -12,7 +12,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
 if TYPE_CHECKING:
-    import numpy as np
+    from PIL.Image import Image
 
 KILL_AFTER_SECONDS = 120
 
@@ -35,51 +35,33 @@ class ReturnType(enum.Enum):
 
 
 class Segmentator:
-    def __init__(self, image, resize: int | None = None) -> None:
+    def __init__(self, image: "Image", resize: int | None = None) -> None:
         self.image = image
         self.resize = resize
 
-    def find_masks(self):
-        from ultralytics import YOLO
+    def crop(self):
+        from rembg import new_session, remove
 
-        model = YOLO(os.getenv("MODEL") or "yolov8x-seg.pt")
-        [result] = model(self.image)
-        return result
-
-    def draw_mask(self, mask_array: "np.ndarray"):
-        """
-        Draws an image mask on a blank image and returns it.
-        It converts the mask coordinates to an alpha mask.
-        """
-        from PIL import Image, ImageDraw
-
-        # Create a blank mask image
-        mask_image = Image.new("L", self.image.size, 0)
-        draw = ImageDraw.Draw(mask_image)
-
-        # Draw a polygon on the mask image using the mask coordinates
-        draw.polygon(mask_array, fill=255)
-
-        return mask_image
-
-    def apply_mask(self, mask_array: "np.ndarray"):
-        from PIL import Image
-
-        mask_image = self.draw_mask(mask_array)
-
-        # Apply the mask to the original image
-        masked_image = Image.new("RGBA", self.image.size)
-        masked_image.paste(self.image, mask=mask_image)
-
+        output: "Image" = remove(
+            self.image,
+            session=new_session(os.environ.get("MODEL", "silueta")),
+            alpha_matting=True,
+            alpha_matting_foreground_threshold=270,
+            alpha_matting_background_threshold=20,
+            alpha_matting_erode_size=11,
+            post_process_mask=True,
+        )
         # Find the bounding box of the masked region
-        bbox = masked_image.getbbox()
+        bbox = output.getbbox()
 
         # Crop the image based on the bounding box
-        segmented_image = masked_image.crop(bbox)
-
+        segmented_image = output.crop(bbox)
         return segmented_image
 
     def resize_image(self, image):
+        if not self.resize:
+            return image
+
         image.thumbnail((self.resize, self.resize))
         if image.width != self.resize or image.height != self.resize:
             if image.width > image.height:
@@ -92,18 +74,9 @@ class Segmentator:
         return image
 
     def segment(self):
-        result = self.find_masks()
-        if len(result.masks) == 0:
-            yield (ReturnType.NO_MASK, None)
-        else:
-            for mask in result.masks:
-                try:
-                    masked_image = self.apply_mask(mask.xy[0])
-                    if self.resize:
-                        masked_image = self.resize_image(masked_image)
-                    yield (ReturnType.SEGMENTED_IMAGE, masked_image)
-                except:
-                    yield (ReturnType.ERROR, None)
+        result = self.crop()
+        resized = self.resize_image(result)
+        return resized
 
 
 async def segment_handler(request: Request):
@@ -131,22 +104,10 @@ async def segment_handler(request: Request):
     body = await request.body()
     image = Image.open(BytesIO(body))
     segmentator = Segmentator(image, resize)
-    segmented = list(segmentator.segment())
-    images = [image]
-    for return_type, segmented_image in segmented:
-        match return_type:
-            case ReturnType.NO_MASK:
-                return JSONResponse(
-                    {"error": "No masks found"},
-                    status_code=HTTPStatus.BAD_REQUEST,
-                )
-            case ReturnType.ERROR:
-                continue
-            case ReturnType.SEGMENTED_IMAGE:
-                images.append(segmented_image)
+    segmented = segmentator.segment()
 
     # If all masks errored out, return an error
-    if len(images) == 0:
+    if not segmented:
         return JSONResponse(
             {"error": "Error cropping image"},
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -160,18 +121,18 @@ async def segment_handler(request: Request):
         aws_session_token=None,
     )
 
-    file_names = []
-    for segmented_image in images:
-        bytes_stream = BytesIO()
-        segmented_image.save(bytes_stream, "WEBP")
-        bytes_stream.seek(0)
-        file_name = uuid.uuid4().hex + ".webp"
-        s3_client.upload_fileobj(bytes_stream, s3_config["bucket"], file_name)
-        file_names.append(
-            os.path.join(s3_config["endpoint"], s3_config["bucket"], file_name)
-        )
-
-    return JSONResponse({"file_names": file_names})
+    bytes_stream = BytesIO()
+    segmented.save(bytes_stream, "WEBP")
+    bytes_stream.seek(0)
+    file_name = uuid.uuid4().hex + ".webp"
+    s3_client.upload_fileobj(bytes_stream, s3_config["bucket"], file_name)
+    return JSONResponse(
+        {
+            "file_names": [
+                os.path.join(s3_config["endpoint"], s3_config["bucket"], file_name)
+            ]
+        }
+    )
 
 
 async def health_handler(request: Request):

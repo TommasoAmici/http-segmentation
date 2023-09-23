@@ -1,5 +1,5 @@
-boto3==1.28.42
-pillow==10.0.0
+boto3==1.28.53
+pillow==10.0.1
+rembg==2.0.50
 starlette==0.31.1
-ultralytics==8.0.172
 uvicorn[standard]==0.23.2
