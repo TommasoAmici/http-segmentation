@@ -1,5 +1,5 @@
 boto3==1.28.53
-pillow==10.0.1
+pillow==10.1.0
 rembg==2.0.52
 starlette==0.31.1
 uvicorn[standard]==0.23.2
