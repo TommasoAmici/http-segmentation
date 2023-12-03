@@ -1,4 +1,4 @@
-FROM python:3.11.5-slim AS builder
+FROM python:3.11.6-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends gcc
 
@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED=1 \
 COPY requirements.txt /app/
 RUN pip install --user --no-cache-dir --prefer-binary -r /app/requirements.txt
 
-FROM python:3.11.5-slim
+FROM python:3.11.6-slim
 
 # required for opencv
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*

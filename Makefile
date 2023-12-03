@@ -17,12 +17,12 @@ venv: .venv/touchfile ## Create Python virtual environment and install dependenc
 clean_venv:
 	[ -d .venv ] && rm -rf .venv
 
-BLACK_DIRS = .
+FORMAT_DIRS = .
 format: venv
-	${BIN}/black ${BLACK_DIRS}
+	${BIN}/ruff format ${FORMAT_DIRS}
 
 format_check: venv
-	${BIN}/black --check ${BLACK_DIRS}
+	${BIN}/ruff format --check ${FORMAT_DIRS}
 
 LINT_DIRS = .
 lint: venv ## Lint codebase with Ruff
