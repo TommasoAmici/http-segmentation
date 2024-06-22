@@ -1,7 +1,7 @@
 import enum
 import os
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from http import HTTPStatus
 from io import BytesIO
 from typing import TYPE_CHECKING
@@ -150,7 +150,7 @@ async def health_handler(request: Request):
     if time_of_last_request is None:
         return Response(status_code=HTTPStatus.OK)
 
-    time_since_last_request = datetime.utcnow() - time_of_last_request
+    time_since_last_request = datetime.now(tz=UTC) - time_of_last_request
     if time_since_last_request.total_seconds() > KILL_AFTER_SECONDS:
         return Response(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
