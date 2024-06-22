@@ -42,7 +42,7 @@ class Segmentator:
     def crop(self):
         from rembg import new_session, remove
 
-        output: "Image" = remove(
+        output: Image = remove(
             self.image,
             session=new_session(os.environ.get("MODEL", "silueta")),
             alpha_matting=True,

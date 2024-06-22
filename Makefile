@@ -26,10 +26,10 @@ format_check: venv
 
 LINT_DIRS = .
 lint: venv ## Lint codebase with Ruff
-	${BIN}/ruff ${LINT_DIRS}
+	${BIN}/ruff check ${LINT_DIRS}
 
 lint_fix: venv ## Lint codebase with Ruff and fix issues automatically
-	${BIN}/ruff --fix ${LINT_DIRS}
+	${BIN}/ruff check --fix ${LINT_DIRS}
 
 include .env
 run: venv ## Run application

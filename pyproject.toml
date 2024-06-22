@@ -1,0 +1,34 @@
+[project]
+requires-python = ">=3.11"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 88
+
+[tool.ruff.lint]
+select = [
+  # https://docs.astral.sh/ruff/rules/#pyflakes-f
+  "F",
+  # https://docs.astral.sh/ruff/rules/#error-e
+  "E",
+  # https://docs.astral.sh/ruff/rules/#warning-w
+  "W",
+  # https://docs.astral.sh/ruff/rules/#isort-i
+  "I001",
+  "G",      # https://pypi.org/project/flake8-logging-format/0.9.0/
+  "SIM",    # https://docs.astral.sh/ruff/rules/#flake8-simplify-sim
+  "RUF100", # removes unused noqa
+  "RUF013", # prohibits implicit Optional, autofixes `arg: str = None` to `arg: str | None = None`
+  # https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
+  "C4",      # https://docs.astral.sh/ruff/rules/unnecessary-comprehension-any-all/
+  "UP",      # automatically upgrade syntax for newer versions.
+  "TCH004",  # https://docs.astral.sh/ruff/rules/runtime-import-in-type-checking-block/
+  "PLC0208", # https://docs.astral.sh/ruff/rules/iteration-over-set/
+  "PLC0414", # https://docs.astral.sh/ruff/rules/useless-import-alias/
+  "PLR0402", # https://docs.astral.sh/ruff/rules/manual-from-import/
+  "PIE",     # https://docs.astral.sh/ruff/rules/#flake8-pie-pie
+  "TID251",
+]
+ignore = [
+  "SIM108", # converts all if-else assignments to ternary, this is not always more readable
+]

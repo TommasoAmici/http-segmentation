@@ -1,2 +1,2 @@
-pdbpp
-ruff>=0.1.6
+ipdb
+ruff==0.4.10
